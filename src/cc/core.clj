@@ -10,6 +10,7 @@
 (defn square-to-coord[square][(quot square 8)  (mod square 8)])
 (defn coord-to-string[[r f]](str (get "abcdefgh" f) (get "87654321" r)))
 (defn square-to-string[sq](assert (square-ok? sq)) (coord-to-string (square-to-coord sq)))
+(defn coord-to-square[[r f]](+ f (* r 8)))
 
 (def squares (range 0 63))
 (doseq [sq squares](eval (list 'def (symbol (square-to-string sq)) sq)))
@@ -17,7 +18,7 @@
 (defn add-coords[[r1 f1] [r2 f2]] [(+ r1 r2) (+ f1 f2) ])
 
 
-(defmacro piece[n g s v](list 'def n {:glyph g :side s :value v}))
+(defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v}))
 (defmacro defpieces[& pcs]
   (let [defs (partition 4 pcs) pnames (map first defs)]
        (concat ['do] (map (fn[pd](concat ['piece] pd)) defs)
@@ -50,6 +51,18 @@
 (def rook-slides   [[1 0][-1 0][0 1][0 -1]])
 (def queen-slides  (concat bishop-slides rook-slides))
 
+(defn coord-to-move[ c1 c2 ]{:from (coord-to-square c1) :to (coord-to-square c2)})
+
+(defn gen-hopper[deltas coord](map (partial coord-to-move coord) (filter coord-ok? (map (partial add-coords coord) deltas))))
+
+
+(defmulti move-tables :Piece)
+
+(defmethod move-tables 'P [p sq] (if (= (:side p) 1) "wp" "bp"))
+
+(defmethod move-tables 'K [p sq] (gen-hopper king-deltas sq))
+ 
+   
 (defn remove-piece-at[board square](dissoc board square))
 
 (defn add-piece-at[board piece square](assoc board square piece))
@@ -57,9 +70,5 @@
 (defn slide-piece[board piece from to]
      (let [b2 (remove-piece-at board to)]
 	  (add-piece-at b2 (get board from) to)))
-
-    
-   
-
 
 
