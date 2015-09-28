@@ -37,11 +37,11 @@
 	   (is (= (gen-ray [-1 -1] [3 4]) (list {:from 28, :to 19} {:from 28, :to 10} {:from 28, :to 1}))))
   
   (testing "white-knight-table" 
-	   (is (= (move-tables white-knight e4)
+	   (is (= (make-move-table white-knight e4)
 		  (list {:from 36, :to 21} {:from 36, :to 19} {:from 36, :to 26} {:from 36, :to 30} {:from 36, :to 42} {:from 36, :to 46} {:from 36, :to 51} {:from 36, :to 53}))))
 
   (testing "white-bishop-table" 
-	  (is (= (move-tables white-bishop g2)
+	  (is (= (make-move-table white-bishop g2)
 		 (list (list {:from 54, :to 45} {:from 54, :to 36} {:from 54, :to 27} {:from 54, :to 18} {:from 54, :to 9} {:from 54, :to 0}) (list {:from 54, :to 47}) (list {:from 54, :to 61}) (list {:from 54, :to 63})))))
 
   )

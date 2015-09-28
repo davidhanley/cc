@@ -69,15 +69,15 @@
 
 (defmethod move-tables 'P [p sq] (if (= (:side p) 1) "wp" "bp"))
 
-(defmethod move-tables 'K [p sq] (gen-hopper king-deltas (square-to-coord sq)))
- 
-(defmethod move-tables 'N [p sq] (gen-hopper knight-deltas (square-to-coord sq)))
+(defmethod move-tables 'K [p sq] (gen-hopper king-deltas sq))
+(defmethod move-tables 'N [p sq] (gen-hopper knight-deltas sq))
 
-(defmethod move-tables 'R [p sq] (gen-rays rook-slides (square-to-coord sq)))
-(defmethod move-tables 'B [p sq] (gen-rays bishop-slides (square-to-coord sq)))
-(defmethod move-tables 'Q [p sq] (gen-rays queen-slides (square-to-coord sq)))
+(defmethod move-tables 'R [p sq] (gen-rays rook-slides sq))
+(defmethod move-tables 'B [p sq] (gen-rays bishop-slides sq))
+(defmethod move-tables 'Q [p sq] (gen-rays queen-slides sq))
 
-   
+(defn make-move-table[piece square](move-tables piece (square-to-coord square)))
+
 (defn remove-piece-at[board square](dissoc board square))
 
 (defn add-piece-at[board piece square](assoc board square piece))
