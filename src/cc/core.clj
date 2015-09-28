@@ -51,17 +51,36 @@
 (def rook-slides   [[1 0][-1 0][0 1][0 -1]])
 (def queen-slides  (concat bishop-slides rook-slides))
 
-(defn coord-to-move[ c1 c2 ]{:from (coord-to-square c1) :to (coord-to-square c2)})
+(defn coords-to-move[ c1 c2 ]{:from (coord-to-square c1) :to (coord-to-square c2)})
 
-(defn gen-hopper[deltas coord](map (partial coord-to-move coord) (filter coord-ok? (map (partial add-coords coord) deltas))))
+;; to-do: refactor the following two to remove shared code 
+(defn gen-hopper[deltas coord]
+  (map (partial coords-to-move coord)(filter coord-ok? (map (partial add-coords coord) deltas))))
 
+(defn gen-ray[delta coord]
+  (map (partial coords-to-move coord)(take-while coord-ok? (rest (iterate (partial add-coords delta) coord)))))
+
+(defn gen-rays[rays coord]
+  (map #(gen-ray %1 coord) rays))
 
 (defmulti move-tables :Piece)
 
 (defmethod move-tables 'P [p sq] (if (= (:side p) 1) "wp" "bp"))
 
-(defmethod move-tables 'K [p sq] (gen-hopper king-deltas sq))
+(defmethod move-tables 'K [p sq] (gen-hopper king-deltas (square-to-coord sq)))
  
+(defmethod move-tables 'N [p sq] (gen-hopper knight-deltas (square-to-coord sq)))
+
+(defmethod move-tables 'R [p sq] (gen-rays rook-slides (square-to-coord sq)))
+(defmethod move-tables 'B [p sq] (gen-rays bishop-slides (square-to-coord sq)))
+(defmethod move-tables 'Q [p sq] (gen-rays queen-slides (square-to-coord sq)))
+
+(def move-tables (memoize move-tables))
+
+(defn benchme[]
+  (reduce + (repeat 10000000
+		    (do (count (move-tables white-queen e4))
+			(count (move-tables white-knight e4))))))
    
 (defn remove-piece-at[board square](dissoc board square))
 
