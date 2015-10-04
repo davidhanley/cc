@@ -78,12 +78,20 @@
 
 (defn make-move-table[piece square](move-tables piece (square-to-coord square)))
 
+(defn get-side-fields[piece]
+  (if (= (:side piece) 1) [:white-pieces-at :white-material :white-pawns]
+                          [:black-pieces-at :black-material :black-pawns] ) )
+
 (defn remove-piece-at[board square](dissoc board square))
 
 (defn add-piece-at[board piece square]
-      (->
-       (assoc square piece)
-       ))
+  (let [[piece-side side-material side-pawns] (get-side-fields piece)]
+       (-> board
+	   (assoc square piece)
+	   (assoc piece-side (conj (piece-side board) square))
+	   (assoc :material (+ (:material board) (* (:value piece) (:side piece))))
+	   (assoc side-material (+ (side-material board) (:value piece)))
+	   )))
 
 (defn print-board[board]
   (let [hr #(print "+---+---+---+---+---+---+---+---+\n")
@@ -98,7 +106,25 @@
 	(doseq [sq squares] (pp sq))
 	(print "\n")(hr)
 ))
-	    
+	  
+(defn base-board[]
+  {:white-pieces-at (set [])
+   :black-pieces-at (set [])
+   :white-material 0
+   :black-material 0 
+   :material 0 
+   :white-pawns 0
+   :black-pawns 0
+   }
+   )
+   
+
+(defn from-fen[str]
+  (let [[board to-move ep-square halfmove_clock full-moves] (clojure.string/split str #" ")
+        squares (remove #{"/"} (clojure.string/split board #""))
+       ]
+       squares
+  ))
 
 (defn slide-piece[board piece from to]
      (let [b2 (remove-piece-at board to)]
