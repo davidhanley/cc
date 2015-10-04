@@ -12,7 +12,7 @@
 (defn square-to-string[sq](assert (square-ok? sq)) (coord-to-string (square-to-coord sq)))
 (defn coord-to-square[[r f]](+ f (* r 8)))
 
-(def squares (range 0 63))
+(def squares (range 0 64))
 (doseq [sq squares](eval (list 'def (symbol (square-to-string sq)) sq)))
 
 (defn add-coords[[r1 f1] [r2 f2]] [(+ r1 r2) (+ f1 f2) ])
@@ -80,10 +80,28 @@
 
 (defn remove-piece-at[board square](dissoc board square))
 
-(defn add-piece-at[board piece square](assoc board square piece))
+(defn add-piece-at[board piece square]
+      (->
+       (assoc square piece)
+       ))
+
+(defn print-board[board]
+  (let [hr #(print "+---+---+---+---+---+---+---+---+\n")
+        ts #(if % % " ")
+        pp (fn[sq]
+	    (when (zero? (mod sq 8)) (print "\n")(hr)(print "|"))
+	    (print " ")
+	    (print (ts (:glyph (board sq))))
+	    (print " |")
+	    )
+	]
+	(doseq [sq squares] (pp sq))
+	(print "\n")(hr)
+))
+	    
 
 (defn slide-piece[board piece from to]
      (let [b2 (remove-piece-at board to)]
-	  (add-piece-at b2 (get board from) to)))
+	  (add-piece-at b2 (board from) to)))
 
 
