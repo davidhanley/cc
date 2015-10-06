@@ -17,8 +17,12 @@
 
 (defn add-coords[[r1 f1] [r2 f2]] [(+ r1 r2) (+ f1 f2) ])
 
+(def rand-source (new java.util.Random))
+(defn hashes[] (vec (take 64 (repeatedly #(.nextLong rand-source)))))
 
-(defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v}))
+(defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v :hashes (hashes)
+	  }))
+
 (defmacro defpieces[& pcs]
   (let [defs (partition 4 pcs) pnames (map first defs)]
        (concat ['do] (map (fn[pd](concat ['piece] pd)) defs)
