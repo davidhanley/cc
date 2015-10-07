@@ -20,7 +20,7 @@
 (def rand-source (new java.util.Random))
 (defn hashes[] (vec (take 64 (repeatedly #(.nextLong rand-source)))))
 
-(defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v :hashes (hashes)
+(defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v :hashes (long-array (hashes))
 	  }))
 
 (defmacro defpieces[& pcs]
@@ -95,6 +95,7 @@
 	   (assoc piece-side (conj (piece-side board) square))
 	   (assoc :material (+ (:material board) (* (:value piece) (:side piece))))
 	   (assoc side-material (+ (side-material board) (:value piece)))
+	   (assoc :hash-code (bit-xor (:hash-code board) (aget (:hashes piece) square)))
 	   )))
 
 (defn print-board[board]
@@ -119,15 +120,23 @@
    :material 0 
    :white-pawns 0
    :black-pawns 0
+   :hash-code 0 
    }
    )
    
 
+(defn char-to-pieces[cs]
+  (let [p (piece-from-string cs)]
+       (if p [p] (repeat (Integer/parseInt cs) nil))))
+	      
 (defn from-fen[str]
   (let [[board to-move ep-square halfmove_clock full-moves] (clojure.string/split str #" ")
         squares (remove #{"/"} (clojure.string/split board #""))
+	slist (mapcat char-to-pieces squares)
+	indexed (map (fn[a b][a b]) slist (range))
+	board (reduce (fn[b [p sq]](print [b p sq])(if (nil? p) b (add-piece-at b p sq))) (base-board) indexed)
        ]
-       squares
+       board
   ))
 
 (defn slide-piece[board piece from to]
