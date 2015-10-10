@@ -30,6 +30,12 @@
 	       
   )
 	 
+(deftest pieces-test
+  (testing "from-string"
+	   (is (= white-pawn (piece-from-string "P")))
+	   ))
+
+
 (deftest movgen-stuff
   (testing "gen-hopper"
 	   (is (= (gen-hopper [[-1 -1]] [1 1]) (list {:from 9, :to 0}))))
@@ -48,4 +54,22 @@
   
 	   
 	   
+(deftest hashing 
+  (testing "nonpawn hashes right"
+	   (is (= (hash-piece {:hash-code 0 :pawn-hash 0} {:value 200 :hashes (long-array [55])}  0) {:hash-code 55 :pawn-hash 0}))
+	   (is (= (hash-piece {:hash-code 0 :pawn-hash 0} {:value 100 :hashes (long-array [55])}  0) {:hash-code 55 :pawn-hash 55}))
+	   )
+  )
 
+(deftest playing 
+  (let [board (from-fen start-fen)]
+       (testing "playing"
+		(let [board2 (play-move board {:from e2 :to e4})]
+		     (is (= (board2 e4) white-pawn))
+		     (is (= (board2 e2) nil))
+		     (is (= (board2 :material) 0))
+		     (is (= (board2 :white-pieces-at) #{62 59 58 60 55 54 48 50 56 36 61 51 57 53 63 49}))
+		     )
+		)
+       )
+  )

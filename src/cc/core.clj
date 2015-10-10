@@ -17,7 +17,7 @@
 
 (defn add-coords[[r1 f1] [r2 f2]] [(+ r1 r2) (+ f1 f2) ])
 
-(def rand-source (new java.util.Random))
+(def rand-source (new java.util.Random 666))
 (defn hashes[] (vec (take 64 (repeatedly #(.nextLong rand-source)))))
 
 (defmacro piece[n g s v](list 'def n {:Piece (list 'quote (symbol (clojure.string/upper-case g))) :glyph g :side s :value v :hashes (long-array (hashes))
@@ -86,7 +86,28 @@
   (if (= (:side piece) 1) [:white-pieces-at :white-material :white-pawns]
                           [:black-pieces-at :black-material :black-pawns] ) )
 
-(defn remove-piece-at[board square](dissoc board square))
+
+
+(defn hash-piece[board piece square]
+  (let [piece-hash (aget (:hashes piece) square)]
+       (assert (not= piece-hash nil))
+       (print board)
+       (assoc board :hash-code (bit-xor (:hash-code board) piece-hash)
+	            :pawn-hash (bit-xor (:pawn-hash board) (if (= (:value piece) 100) piece-hash 0))
+		    )
+       ))
+
+(defn remove-piece-at[board square]
+  (let [piece (get board square)
+        [piece-side side-material side-pawns] (get-side-fields piece)] 
+       (-> board 
+	   (dissoc square)
+	   (assoc piece-side (disj (piece-side board) square))
+	   (hash-piece piece square)
+	   (assoc :material (- (:material board) (* (:value piece) (:side piece))))
+	   (assoc side-material (- (side-material board) (:value piece)))
+	   )))
+       
 
 (defn add-piece-at[board piece square]
   (let [[piece-side side-material side-pawns] (get-side-fields piece)]
@@ -95,7 +116,7 @@
 	   (assoc piece-side (conj (piece-side board) square))
 	   (assoc :material (+ (:material board) (* (:value piece) (:side piece))))
 	   (assoc side-material (+ (side-material board) (:value piece)))
-	   (assoc :hash-code (bit-xor (:hash-code board) (aget (:hashes piece) square)))
+	   (hash-piece piece square)
 	   )))
 
 (defn print-board[board]
@@ -121,6 +142,7 @@
    :white-pawns 0
    :black-pawns 0
    :hash-code 0 
+   :pawn-hash 0
    }
    )
    
@@ -134,13 +156,23 @@
         squares (remove #{"/"} (clojure.string/split board #""))
 	slist (mapcat char-to-pieces squares)
 	indexed (map (fn[a b][a b]) slist (range))
-	board (reduce (fn[b [p sq]](print [b p sq])(if (nil? p) b (add-piece-at b p sq))) (base-board) indexed)
+	board (reduce (fn[b [p sq]](if (nil? p) b (add-piece-at b p sq))) (base-board) indexed)
        ]
        board
   ))
 
-(defn slide-piece[board piece from to]
-     (let [b2 (remove-piece-at board to)]
-	  (add-piece-at b2 (board from) to)))
+(defn play-move[board move]
+  (let [to (:to move)
+        from (:from move)
+	special (:special move)
+	dest (board to)
+	from-piece (board from)]
+       (->
+	(if (nil? dest) board (remove-piece-at board to))
+	(remove-piece-at from)
+	(add-piece-at from-piece to)
+	;(if special (:special board) board )
+	)))
+    
 
 
